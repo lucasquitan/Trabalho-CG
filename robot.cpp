@@ -13,7 +13,7 @@
 
 using namespace std;
 
-char* filenameTexMetal1 = "./metalTexture1.bmp";
+char filenameTexMetal1[] = "./metalTexture1.bmp";
 
 GLuint _textureIdMetal1;
 GLuint _textureIdSphere;
@@ -23,26 +23,12 @@ GLUquadric *quadCylinder;
 
 bool textureOn = true;
 
-float diameterCylinder = 0.3;
-float diameterSphere = 0.4;
-float sizeArm = 4.5;
-float sizeForearm = 3.0;
-float sizeHand = 2.0;
-float sizeClampPart = 1.0;
-float diameterBase = 2.0;
-float heightBase = 0.5;
-
-float eyeDistance = 20.0;
-float eyeX;
-float eyeY;
-float eyeZ;
 float viewAngleX = 0.0;
 float viewAngleZ = 15.0;
 
 float angleArm = 90.0;
 float angleForearm = 90.0;
-float angleHand = 0.0;
-float angleClampZ = 0.0;
+
 float angleClampY = 0.0;
 
 //makes the image into a texture, and returns the id of the texture
@@ -57,7 +43,7 @@ GLuint loadTexture(char *filename) {
 	glTexImage2D(GL_TEXTURE_2D,	//Always GL_TEXTURE_2D
 		0,						//0 for now
 		GL_RGB,					//Format OpenGL uses for image
-		theTexMap.GetNumCols(),	//Width 
+		theTexMap.GetNumCols(),	//Width
 		theTexMap.GetNumRows(),	//Height
 		0,						//The border of the image
 		GL_RGB,					//GL_RGB, because pixels are stored in RGB format
@@ -82,7 +68,7 @@ void handleKeypress(unsigned char key, int x, int y) {
 		if (viewAngleZ < 180) viewAngleZ += 3;
 		glutPostRedisplay();
 		break;
-	case 'z': //Decrease view angle z axis
+	case 's': //Decrease view angle z axis
 		if (viewAngleZ > 0) viewAngleZ -= 3;
 		glutPostRedisplay();
 		break;
@@ -90,7 +76,7 @@ void handleKeypress(unsigned char key, int x, int y) {
 		if (viewAngleX > 0) viewAngleX -= 3;
 		glutPostRedisplay();
 		break;
-	case 's': //Increase view angle x axis
+	case 'dt': //Increase view angle x axis
 		if (viewAngleX < 180) viewAngleX += 3;
 		glutPostRedisplay();
 		break;
@@ -182,32 +168,32 @@ void drawSphere(float diameter) {
 	gluSphere(quadSphere, diameter, 40.0, 40.0);
 }
 
-void drawScene(void) {
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	glEnable(GL_TEXTURE_2D);
-
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-	eyeX = eyeDistance * cos(viewAngleZ*PI / 180) * cos(viewAngleX*PI / 180);
-	eyeY = eyeDistance * cos(viewAngleZ*PI / 180) * sin(viewAngleX*PI / 180);
-	eyeZ = eyeDistance * sin(viewAngleZ*PI / 180);
-	if (viewAngleZ<90)
-		gluLookAt(eyeX, eyeY, eyeZ, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0);
-	else
-		gluLookAt(eyeX, eyeY, eyeZ, 0.0, 0.0, 0.0, 0.0, 0.0, -1.0);
-
-	// drawing color
-	glColor3f(1.0f, 1.0f, 1.0f);
-
+void drawBase() {
+	float diameterCylinder = 0.3;
+	float diameterBase = 2.0;
+	float heightBase = 0.5;
+	
 	// draws the base
 	drawCylinder(diameterBase, heightBase);
 	glTranslatef(0.0f, 0.0f, heightBase);
 	drawDisk(diameterCylinder, diameterBase);
+}
 
+void drawClaw() {
+	float diameterCylinder = 0.3;
+	float diameterSphere = 0.4;
+	float sizeArm = 4.5;
+	float sizeForearm = 3.0;
+	float sizeHand = 2.0;
+	float sizeClampPart = 1.0;
+	
+
+	float angleHand = 0.0;
+	float angleClampZ = 0.0;
+	
 	// move to arm referential
 	glRotatef(angleArm, 0.0f, 0.0f, 1.0f);
-
+	
 	//draws the arm
 	drawCylinder(diameterCylinder, sizeArm);
 
@@ -270,7 +256,33 @@ void drawScene(void) {
 	drawCone(diameterCylinder / 3, sizeClampPart);
 
 	glPopMatrix();
+}
 
+void drawScene(void) {
+	float eyeDistance = 20.0;
+	
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	glEnable(GL_TEXTURE_2D);
+
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	
+	float eyeX = eyeDistance * cos(viewAngleZ * PI / 180) * cos(viewAngleX * PI / 180);
+	float eyeY = eyeDistance * cos(viewAngleZ * PI / 180) * sin(viewAngleX * PI / 180);
+	float eyeZ = eyeDistance * sin(viewAngleZ * PI / 180);
+	
+	if (viewAngleZ < 90)
+		gluLookAt(eyeX, eyeY, eyeZ, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0);
+	else
+		gluLookAt(eyeX, eyeY, eyeZ, 0.0, 0.0, 0.0, 0.0, 0.0, -1.0);
+
+	// drawing color
+	glColor3f(1.0f, 1.0f, 1.0f);
+
+	drawBase();	
+	drawClaw();
+	
 	glutSwapBuffers();
 }
 
@@ -278,7 +290,7 @@ int main(int argc, char** argv) {
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
 	glutInitWindowSize(800, 800);
-	glutCreateWindow("Garra");
+	glutCreateWindow("Robô");
 
 	initRendering();
 	glutDisplayFunc(drawScene);

@@ -35,21 +35,25 @@ float angleClampY = 0.0;
 GLuint loadTexture(char *filename) {
 	GLuint textureId;
 
-	RgbImage theTexMap(filename); //Image with texture
+	RgbImage theTexMap(filename); // image with texture
 
-	glGenTextures(1, &textureId); //Make room for our texture
-	glBindTexture(GL_TEXTURE_2D, textureId);	//Tell OpenGL which texture to edit
-												//Map the image to the texture
-	glTexImage2D(GL_TEXTURE_2D,	//Always GL_TEXTURE_2D
-		0,						//0 for now
-		GL_RGB,					//Format OpenGL uses for image
-		theTexMap.GetNumCols(),	//Width
-		theTexMap.GetNumRows(),	//Height
-		0,						//The border of the image
-		GL_RGB,					//GL_RGB, because pixels are stored in RGB format
-		GL_UNSIGNED_BYTE,		//GL_UNSIGNED_BYTE, because pixels are stored as unsigned numbers
-		theTexMap.ImageData());	//The actual pixel data
-	return textureId; //Returns the id of the texture
+	glGenTextures(1, &textureId); // make room for our texture
+	
+	// tell OpenGL which texture to edit
+	// map the image to the texture
+	glBindTexture(GL_TEXTURE_2D, textureId);
+	
+	glTexImage2D(GL_TEXTURE_2D,
+		0, // No mipmap
+		GL_RGB, // format OpenGL uses for image
+		theTexMap.GetNumCols(), // width
+		theTexMap.GetNumRows(), // height
+		0, // image border
+		GL_RGB, // pixels are stored in RGB format
+		GL_UNSIGNED_BYTE, // pixels are stored as unsigned numbers
+		theTexMap.ImageData()); // pixel data
+	
+	return textureId;
 }
 
 void initRendering(void) {
@@ -64,53 +68,43 @@ void handleKeypress(unsigned char key, int x, int y) {
 	switch (key) {
 	case 27: //Escape key
 		exit(0);
-	case 'w': //Increase view angle z axis
+	case 's': //Increase view angle z axis
 		if (viewAngleZ < 180) viewAngleZ += 3;
-		glutPostRedisplay();
 		break;
-	case 's': //Decrease view angle z axis
+	case 'w': //Decrease view angle z axis
 		if (viewAngleZ > 0) viewAngleZ -= 3;
-		glutPostRedisplay();
 		break;
-	case 'a': //Decrease view angle x axis
+	case 'd': //Decrease view angle x axis
 		if (viewAngleX > 0) viewAngleX -= 3;
-		glutPostRedisplay();
 		break;
-	case 'dt': //Increase view angle x axis
+	case 'a': //Increase view angle x axis
 		if (viewAngleX < 180) viewAngleX += 3;
-		glutPostRedisplay();
 		break;
 	case 't': //Use texture or not
 		textureOn = !textureOn;
-		glutPostRedisplay();
 		break;
 	case '1': //Increase arm angle
 		angleArm += 3;
 		if (angleArm >= 360) angleArm = 0;
-		glutPostRedisplay();
 		break;
 	case '2': //Decrease arm angle
 		angleArm -= 3;
 		if (angleArm <= 0) angleArm = 360;
-		glutPostRedisplay();
 		break;
 	case '3': //Increase forearm angle
 		if (angleForearm < 90) angleForearm += 3;
-		glutPostRedisplay();
 		break;
 	case '4': //Decrease forearm angle
 		if (angleForearm > -90) angleForearm -= 3;
-		glutPostRedisplay();
 		break;
 	case '5': //Increase clamp angle y axis
 		if (angleClampY < 60) angleClampY += 3;
-		glutPostRedisplay();
 		break;
 	case '6': //Decrease clamp angle y axis
 		if (angleClampY > 0) angleClampY -= 3;
-		glutPostRedisplay();
 		break;
 	}
+	glutPostRedisplay();
 }
 
 void handleResize(int w, int h) {
@@ -168,98 +162,94 @@ void drawSphere(float diameter) {
 	gluSphere(quadSphere, diameter, 40.0, 40.0);
 }
 
-void drawBase() {
-	float diameterCylinder = 0.3;
-	float diameterBase = 2.0;
-	float heightBase = 0.5;
-	
-	// draws the base
-	drawCylinder(diameterBase, heightBase);
-	glTranslatef(0.0f, 0.0f, heightBase);
-	drawDisk(diameterCylinder, diameterBase);
+void drawBase(float heightBase, float diameterBase) {
+	glPushMatrix();
+		drawCylinder(diameterBase, heightBase);
+		glTranslatef(0., 0., heightBase);
+		drawDisk(0., diameterBase);
+	glPopMatrix();
 }
 
-void drawClaw() {
+void drawClaw(float x, float y, float z) {
 	float diameterCylinder = 0.3;
 	float diameterSphere = 0.4;
 	float sizeArm = 4.5;
 	float sizeForearm = 3.0;
 	float sizeHand = 2.0;
 	float sizeClampPart = 1.0;
-	
 
 	float angleHand = 0.0;
 	float angleClampZ = 0.0;
 	
-	// move to arm referential
-	glRotatef(angleArm, 0.0f, 0.0f, 1.0f);
-	
-	//draws the arm
-	drawCylinder(diameterCylinder, sizeArm);
-
-	// move to forearm referential
-	glTranslatef(0.0f, 0.0f, sizeArm + diameterSphere / 5);
-	glRotatef(angleForearm, 0.0f, 1.0f, 0.0f);
-
-	//draws the forearm
-	drawSphere(diameterSphere);
-	glTranslatef(0.0f, 0.0f, diameterSphere / 5);
-	drawCylinder(diameterCylinder, sizeForearm);
-
-	//move to clamp referential
-	glTranslatef(0.0f, 0.0f, sizeForearm + diameterSphere / 5);
-	glRotatef(angleClampZ, 0.0f, 0.0f, 1.0f);
-
-	//draws the clamp sphere
-	drawSphere(diameterSphere);
-	glTranslatef(0.0f, 0.0f, diameterSphere / 2);
-
 	glPushMatrix();
+		// move to arm referential
+		glTranslatef(x, y, z);
+		glRotatef(angleArm, 0.0f, 0.0f, 1.0f);
+		
+		//draws the arm
+		drawCylinder(diameterCylinder, sizeArm);
 
-	//draws top part of clamp
-	glRotatef(angleClampY + 60, 0.0f, 1.0f, 0.0f);
+		// move to forearm referential
+		glTranslatef(0.0f, 0.0f, sizeArm + diameterSphere / 5);
+		glRotatef(angleForearm, 0.0f, 1.0f, 0.0f);
 
-	drawCylinder(diameterCylinder / 3, sizeClampPart);
-	glTranslatef(0.0f, 0.0f, sizeClampPart + diameterSphere / 15);
-	drawSphere(diameterSphere / 3);
+		//draws the forearm
+		drawSphere(diameterSphere);
+		glTranslatef(0.0f, 0.0f, diameterSphere / 5);
+		drawCylinder(diameterCylinder, sizeForearm);
 
-	glTranslatef(0.0f, 0.0f, diameterSphere / 15);
-	glRotatef(-60, 0.0f, 1.0f, 0.0f);
+		//move to clamp referential
+		glTranslatef(0.0f, 0.0f, sizeForearm + diameterSphere / 5);
+		glRotatef(angleClampZ, 0.0f, 0.0f, 1.0f);
 
-	drawCylinder(diameterCylinder / 3, sizeClampPart);
-	glTranslatef(0.0f, 0.0f, sizeClampPart + diameterSphere / 15);
-	drawSphere(diameterSphere / 3);
+		//draws the clamp sphere
+		drawSphere(diameterSphere);
+		glTranslatef(0.0f, 0.0f, diameterSphere / 2);
 
-	glTranslatef(0.0f, 0.0f, diameterSphere / 15);
-	glRotatef(-60, 0.0f, 1.0f, 0.0f);
-	drawCone(diameterCylinder / 3, sizeClampPart);
+		glPushMatrix();
+			//draws top part of clamp
+			glRotatef(angleClampY + 60, 0.0f, 1.0f, 0.0f);
 
-	glPopMatrix();
-	glPushMatrix();
+			drawCylinder(diameterCylinder / 3, sizeClampPart);
+			glTranslatef(0.0f, 0.0f, sizeClampPart + diameterSphere / 15);
+			drawSphere(diameterSphere / 3);
 
-	//draws bottom part of clamp
-	glRotatef(-angleClampY - 60, 0.0f, 1.0f, 0.0f);
+			glTranslatef(0.0f, 0.0f, diameterSphere / 15);
+			glRotatef(-60, 0.0f, 1.0f, 0.0f);
 
-	drawCylinder(diameterCylinder / 3, sizeClampPart);
-	glTranslatef(0.0f, 0.0f, sizeClampPart + diameterSphere / 15);
-	drawSphere(diameterSphere / 3);
+			drawCylinder(diameterCylinder / 3, sizeClampPart);
+			glTranslatef(0.0f, 0.0f, sizeClampPart + diameterSphere / 15);
+			drawSphere(diameterSphere / 3);
 
-	glTranslatef(0.0f, 0.0f, diameterSphere / 15);
-	glRotatef(60, 0.0f, 1.0f, 0.0f);
+			glTranslatef(0.0f, 0.0f, diameterSphere / 15);
+			glRotatef(-60, 0.0f, 1.0f, 0.0f);
+			drawCone(diameterCylinder / 3, sizeClampPart);
+		glPopMatrix();
+		
+		glPushMatrix();
+			//draws bottom part of clamp
+			glRotatef(-angleClampY - 60, 0.0f, 1.0f, 0.0f);
 
-	drawCylinder(diameterCylinder / 3, sizeClampPart);
-	glTranslatef(0.0f, 0.0f, sizeClampPart + diameterSphere / 15);
-	drawSphere(diameterSphere / 3);
+			drawCylinder(diameterCylinder / 3, sizeClampPart);
+			glTranslatef(0.0f, 0.0f, sizeClampPart + diameterSphere / 15);
+			drawSphere(diameterSphere / 3);
 
-	glTranslatef(0.0f, 0.0f, diameterSphere / 15);
-	glRotatef(60, 0.0f, 1.0f, 0.0f);
-	drawCone(diameterCylinder / 3, sizeClampPart);
+			glTranslatef(0.0f, 0.0f, diameterSphere / 15);
+			glRotatef(60, 0.0f, 1.0f, 0.0f);
 
+			drawCylinder(diameterCylinder / 3, sizeClampPart);
+			glTranslatef(0.0f, 0.0f, sizeClampPart + diameterSphere / 15);
+			drawSphere(diameterSphere / 3);
+
+			glTranslatef(0.0f, 0.0f, diameterSphere / 15);
+			glRotatef(60, 0.0f, 1.0f, 0.0f);
+			drawCone(diameterCylinder / 3, sizeClampPart);
+		glPopMatrix();
 	glPopMatrix();
 }
 
 void drawScene(void) {
-	float eyeDistance = 20.0;
+	float eyeDistance = 20.;
 	
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -273,15 +263,16 @@ void drawScene(void) {
 	float eyeZ = eyeDistance * sin(viewAngleZ * PI / 180);
 	
 	if (viewAngleZ < 90)
-		gluLookAt(eyeX, eyeY, eyeZ, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0);
+		gluLookAt(eyeX, eyeY, eyeZ, 0., 0., 0., 0., 0., 1.);
 	else
-		gluLookAt(eyeX, eyeY, eyeZ, 0.0, 0.0, 0.0, 0.0, 0.0, -1.0);
+		gluLookAt(eyeX, eyeY, eyeZ, 0., 0., 0., 0., 0., -1.);
 
 	// drawing color
-	glColor3f(1.0f, 1.0f, 1.0f);
+	glColor3f(1., 1., 1.);
 
-	drawBase();	
-	drawClaw();
+	drawBase(.5, 10.);
+	drawClaw(0., +5., 0.);
+	drawClaw(0., -5., 0.);
 	
 	glutSwapBuffers();
 }
@@ -290,7 +281,7 @@ int main(int argc, char** argv) {
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
 	glutInitWindowSize(800, 800);
-	glutCreateWindow("Robô");
+	glutCreateWindow("Robot");
 
 	initRendering();
 	glutDisplayFunc(drawScene);

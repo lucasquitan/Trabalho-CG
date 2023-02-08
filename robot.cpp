@@ -26,10 +26,24 @@ bool textureOn = true;
 float viewAngleX = 0.0;
 float viewAngleZ = 15.0;
 
-float angleArm = 90.0;
-float angleForearm = 90.0;
+struct Claw {
+	float x, y, z;
+	float angleArm, angleForearm, angleClamp;
+};
 
-float angleClampY = 0.0;
+Claw leftClaw = {
+	.x = .0, .y = +5., .z = 0,
+	.angleArm = 90.,
+	.angleForearm = 90.,
+	.angleClamp = 0.
+};
+	
+Claw rightClaw = {
+	.x = .0, .y = -5., .z = 0,
+	.angleArm = 180.,
+	.angleForearm = 90.,
+	.angleClamp = 0.
+};
 
 //makes the image into a texture, and returns the id of the texture
 GLuint loadTexture(char *filename) {
@@ -65,6 +79,8 @@ void initRendering(void) {
 }
 
 void handleKeypress(unsigned char key, int x, int y) {
+	Claw *left = &leftClaw;
+	
 	switch (key) {
 	case 27: //Escape key
 		exit(0);
@@ -84,24 +100,24 @@ void handleKeypress(unsigned char key, int x, int y) {
 		textureOn = !textureOn;
 		break;
 	case '1': //Increase arm angle
-		angleArm += 3;
-		if (angleArm >= 360) angleArm = 0;
+		left->angleArm += 3;
+		if (left->angleArm >= 360) left->angleArm = 0;
 		break;
 	case '2': //Decrease arm angle
-		angleArm -= 3;
-		if (angleArm <= 0) angleArm = 360;
+		left->angleArm -= 3;
+		if (left->angleArm <= 0) left->angleArm = 360;
 		break;
 	case '3': //Increase forearm angle
-		if (angleForearm < 90) angleForearm += 3;
+		if (left->angleForearm < 90) left->angleForearm += 3;
 		break;
 	case '4': //Decrease forearm angle
-		if (angleForearm > -90) angleForearm -= 3;
+		if (left->angleForearm > -90) left->angleForearm -= 3;
 		break;
 	case '5': //Increase clamp angle y axis
-		if (angleClampY < 60) angleClampY += 3;
+		if (left->angleClamp < 60) left->angleClamp += 3;
 		break;
 	case '6': //Decrease clamp angle y axis
-		if (angleClampY > 0) angleClampY -= 3;
+		if (left->angleClamp > 0) left->angleClamp -= 3;
 		break;
 	}
 	glutPostRedisplay();
@@ -162,6 +178,7 @@ void drawSphere(float diameter) {
 	gluSphere(quadSphere, diameter, 40.0, 40.0);
 }
 
+
 void drawBase(float heightBase, float diameterBase) {
 	glPushMatrix();
 		drawCylinder(diameterBase, heightBase);
@@ -170,7 +187,7 @@ void drawBase(float heightBase, float diameterBase) {
 	glPopMatrix();
 }
 
-void drawClaw(float x, float y, float z) {
+void drawClaw(Claw c) {
 	float diameterCylinder = 0.3;
 	float diameterSphere = 0.4;
 	float sizeArm = 4.5;
@@ -178,20 +195,19 @@ void drawClaw(float x, float y, float z) {
 	float sizeHand = 2.0;
 	float sizeClampPart = 1.0;
 
-	float angleHand = 0.0;
 	float angleClampZ = 0.0;
 	
 	glPushMatrix();
 		// move to arm referential
-		glTranslatef(x, y, z);
-		glRotatef(angleArm, 0.0f, 0.0f, 1.0f);
+		glTranslatef(c.x, c.y, c.z);
+		glRotatef(c.angleArm, 0.0f, 0.0f, 1.0f);
 		
 		//draws the arm
 		drawCylinder(diameterCylinder, sizeArm);
 
 		// move to forearm referential
 		glTranslatef(0.0f, 0.0f, sizeArm + diameterSphere / 5);
-		glRotatef(angleForearm, 0.0f, 1.0f, 0.0f);
+		glRotatef(c.angleForearm, 0.0f, 1.0f, 0.0f);
 
 		//draws the forearm
 		drawSphere(diameterSphere);
@@ -208,7 +224,7 @@ void drawClaw(float x, float y, float z) {
 
 		glPushMatrix();
 			//draws top part of clamp
-			glRotatef(angleClampY + 60, 0.0f, 1.0f, 0.0f);
+			glRotatef(c.angleClamp + 60, 0.0f, 1.0f, 0.0f);
 
 			drawCylinder(diameterCylinder / 3, sizeClampPart);
 			glTranslatef(0.0f, 0.0f, sizeClampPart + diameterSphere / 15);
@@ -228,7 +244,7 @@ void drawClaw(float x, float y, float z) {
 		
 		glPushMatrix();
 			//draws bottom part of clamp
-			glRotatef(-angleClampY - 60, 0.0f, 1.0f, 0.0f);
+			glRotatef(-c.angleClamp - 60, 0.0f, 1.0f, 0.0f);
 
 			drawCylinder(diameterCylinder / 3, sizeClampPart);
 			glTranslatef(0.0f, 0.0f, sizeClampPart + diameterSphere / 15);
@@ -271,8 +287,8 @@ void drawScene(void) {
 	glColor3f(1., 1., 1.);
 
 	drawBase(.5, 10.);
-	drawClaw(0., +5., 0.);
-	drawClaw(0., -5., 0.);
+	drawClaw(leftClaw);
+	drawClaw(rightClaw);
 	
 	glutSwapBuffers();
 }

@@ -27,20 +27,17 @@ float viewAngleX = 0.0;
 float viewAngleZ = 15.0;
 
 struct Claw {
-	float x, y, z;
 	float angleArm, angleForearm, angleClamp;
 };
 
 Claw leftClaw = {
-	.x = .0, .y = +5., .z = 0,
-	.angleArm = 90.,
+	.angleArm = 270.,
 	.angleForearm = 90.,
 	.angleClamp = 0.
 };
 	
 Claw rightClaw = {
-	.x = .0, .y = -5., .z = 0,
-	.angleArm = 180.,
+	.angleArm = 90.,
 	.angleForearm = 90.,
 	.angleClamp = 0.
 };
@@ -187,6 +184,18 @@ void drawBase(float heightBase, float diameterBase) {
 	glPopMatrix();
 }
 
+void drawBody(float sphereDiameter, float cylinderHeight, float cylinderDiameter) {
+	glPushMatrix();
+		drawSphere(sphereDiameter);
+		glTranslatef(0., 0., sphereDiameter);
+		drawDisk(0., cylinderDiameter);
+		drawCylinder(cylinderDiameter, cylinderHeight);
+		glTranslatef(0., 0., cylinderHeight);
+		drawDisk(0., cylinderDiameter);
+	glPopMatrix();
+}
+
+
 void drawClaw(Claw c) {
 	float diameterCylinder = 0.3;
 	float diameterSphere = 0.4;
@@ -199,7 +208,6 @@ void drawClaw(Claw c) {
 	
 	glPushMatrix();
 		// move to arm referential
-		glTranslatef(c.x, c.y, c.z);
 		glRotatef(c.angleArm, 0.0f, 0.0f, 1.0f);
 		
 		//draws the arm
@@ -286,9 +294,23 @@ void drawScene(void) {
 	// drawing color
 	glColor3f(1., 1., 1.);
 
-	drawBase(.5, 10.);
-	drawClaw(leftClaw);
-	drawClaw(rightClaw);
+	drawBase(.5, 7.5);
+	
+	glTranslatef(0., 0., 3.);
+	
+	drawBody(2.5, 7.5, 5.);
+	
+	glPushMatrix();
+		glTranslatef(0., +5., 8.);
+		glRotatef(-90., 1., 0., 0.);
+		drawClaw(leftClaw);
+	glPopMatrix();
+	
+	glPushMatrix();
+		glTranslatef(0., -5., 8.);
+		glRotatef(90., 1., 0., 0.);
+		drawClaw(rightClaw);
+	glPopMatrix();
 	
 	glutSwapBuffers();
 }

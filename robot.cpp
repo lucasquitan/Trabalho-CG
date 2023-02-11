@@ -21,6 +21,8 @@ GLuint _textureIdCylinder;
 GLUquadric *quadSphere;
 GLUquadric *quadCylinder;
 
+GLfloat fov;
+
 bool textureOn = true;
 
 float viewAngleX = 0.0;
@@ -75,6 +77,38 @@ void initRendering(void) {
 	_textureIdSphere = _textureIdMetal1;
 }
 
+void enableLigthing(void) {
+	// Ligth source
+	GLfloat ambientLight[4] = { 0.2, 0.2, 0.2, 1.0 };
+	GLfloat difuseLigth[4] = { 0.7, 0.7, 0.7, 1.0 };
+	GLfloat especularLight[4] = { 1.0, 1.0, 1.0, 1.0 };
+	GLfloat ligthPosition[4] = { 0.0, 50.0, 50.0, 1.0 };
+
+	// Eneble ligthing primitive
+	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, ambientLight);
+
+	// Set the parameters
+	glLightfv(GL_LIGHT0, GL_AMBIENT, ambientLight);
+	glLightfv(GL_LIGHT0, GL_DIFFUSE, difuseLigth);
+	glLightfv(GL_LIGHT0, GL_SPECULAR, especularLight);
+	glLightfv(GL_LIGHT0, GL_POSITION, ligthPosition);
+
+	// Material properties
+	GLfloat espec[4] = { 1.0,1.0,1.0,1.0 };
+	GLint especMaterial = 50;
+	glMaterialfv(GL_FRONT, GL_SPECULAR, espec);
+	glMateriali(GL_FRONT, GL_SHININESS, especMaterial);
+	glShadeModel(GL_SMOOTH); 
+	glEnable(GL_COLOR_MATERIAL); 
+	glEnable(GL_LIGHTING);
+	glEnable(GL_LIGHT0);
+	glEnable(GL_DEPTH_TEST);
+	
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+
+	fov = 70;
+}
+
 void handleKeypress(unsigned char key, int x, int y) {
 	Claw *left = &leftClaw;
 	
@@ -120,11 +154,19 @@ void handleKeypress(unsigned char key, int x, int y) {
 	glutPostRedisplay();
 }
 
+void handleButtonPress(int button, int state, int x, int y) {
+	if (button == GLUT_LEFT_BUTTON) // Zoom-in
+		if (state == GLUT_DOWN) { if (fov >= 10) fov -= 5; }
+	if (button == GLUT_RIGHT_BUTTON) // Zoom-out
+		if (state == GLUT_DOWN) { if (fov <= 130) fov += 5; }
+	glutPostRedisplay(); // Redesenha
+}
+
 void handleResize(int w, int h) {
 	glViewport(0, 0, w, h);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	gluPerspective(60.0, (float)w / (float)h, 1.0, 50.0);
+	gluPerspective(fov, (float)w / (float)h, 2.0, 100.0);
 }
 
 void drawCylinder(float diameter, float lenght) {
@@ -192,6 +234,14 @@ void drawBody(float sphereDiameter, float cylinderHeight, float cylinderDiameter
 		drawCylinder(cylinderDiameter, cylinderHeight);
 		glTranslatef(0., 0., cylinderHeight);
 		drawDisk(0., cylinderDiameter);
+	glPopMatrix();
+}
+
+void drawHead(float sphereDiameter, float cylinderHeight, float cylinderDiameter) {
+	glPushMatrix();
+		drawCylinder(cylinderDiameter, cylinderHeight);
+		glTranslatef(0., 0., cylinderHeight);
+		drawSphere(sphereDiameter);
 	glPopMatrix();
 }
 
@@ -273,8 +323,7 @@ void drawClaw(Claw c) {
 }
 
 void drawScene(void) {
-	float eyeDistance = 20.;
-	
+
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glEnable(GL_TEXTURE_2D);
@@ -282,9 +331,9 @@ void drawScene(void) {
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 	
-	float eyeX = eyeDistance * cos(viewAngleZ * PI / 180) * cos(viewAngleX * PI / 180);
-	float eyeY = eyeDistance * cos(viewAngleZ * PI / 180) * sin(viewAngleX * PI / 180);
-	float eyeZ = eyeDistance * sin(viewAngleZ * PI / 180);
+	float eyeX = fov * cos(viewAngleZ * PI / 180) * cos(viewAngleX * PI / 180);
+	float eyeY = fov * cos(viewAngleZ * PI / 180) * sin(viewAngleX * PI / 180);
+	float eyeZ = fov * sin(viewAngleZ * PI / 180);
 	
 	if (viewAngleZ < 90)
 		gluLookAt(eyeX, eyeY, eyeZ, 0., 0., 0., 0., 0., 1.);
@@ -299,6 +348,8 @@ void drawScene(void) {
 	glTranslatef(0., 0., 3.);
 	
 	drawBody(2.5, 7.5, 5.);
+
+	glTranslatef(0., 0., 3.);
 	
 	glPushMatrix();
 		glTranslatef(0., +5., 8.);
@@ -324,8 +375,10 @@ int main(int argc, char** argv) {
 	initRendering();
 	glutDisplayFunc(drawScene);
 	glutKeyboardFunc(handleKeypress);
+	glutMouseFunc(handleButtonPress);
 	glutReshapeFunc(handleResize);
 
+	enableLigthing();
 	glutMainLoop();
 	return 0;
 }

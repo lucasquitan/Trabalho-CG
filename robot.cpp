@@ -345,8 +345,6 @@ void drawScene(void) {
 
 	drawBase(.5, 7.5);
 	
-	glTranslatef(0., 0., 3.);
-	
 	drawBody(2.5, 7.5, 5.);
 
 	glTranslatef(0., 0., 3.);
